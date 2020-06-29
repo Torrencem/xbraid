@@ -51,8 +51,8 @@
 #include "braid.h"
 #include "braid_test.h"
 
-#define OMEGA (2.0*3.14159)
-#define LAMBDA (0.1)
+#define OMEGA (1.0)
+#define LAMBDA (1.0)
 // Initial position in radians
 #define THETA_1_INIT 0.75
 // Initial velocity
@@ -313,6 +313,8 @@ int
 my_TriSolve(braid_App       app,
             braid_Vector    uleft,
             braid_Vector    uright,
+            braid_Vector    fleft,
+            braid_Vector    fright,
             braid_Vector    f,
             braid_Vector    u,
             braid_TriStatus status)
@@ -595,12 +597,12 @@ main(int argc, char *argv[])
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
    /* Define time domain */
-   ntime  = 100;              /* Total number of time-steps */
+   ntime  = 2048*2;              /* Total number of time-steps */
    tstart = 0.0;             /* Beginning of time domain */
-   tstop  = 1.0;             /* End of time domain*/
+   tstop  = 10.0;             /* End of time domain*/
 
    /* Define some optimization parameters */
-   gamma = 0.005;            /* Relaxation parameter in the objective function */
+   gamma = 0.5;            /* Relaxation parameter in the objective function */
 
 
    /* Define some Braid parameters */
@@ -608,7 +610,7 @@ main(int argc, char *argv[])
    min_coarse     = 1;
    nrelax         = 1;
    nrelaxc        = 7;
-   maxiter        = 20;
+   maxiter        = 100;
    cfactor        = 2;
    tol            = 1.0e-6;
    access_level   = 1;
