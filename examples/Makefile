@@ -178,5 +178,5 @@ clean: cleanout
 	rm -rf *.dSYM
 
 cleanout:
-	rm -f ex*.out.* tri*.out.*
+	rm -f ex*.out.* tri*.out.* pendulum*.out.* *.out.cycle*
 
