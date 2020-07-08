@@ -69,24 +69,26 @@
 
 // Define BraidVector, can contain anything, and be named anything
 // --> Put all time-dependent information here
-class BraidVector
+class MyBraidVector
 {
 public:
    // Each vector holds the scalar solution value at a particular time 
    double value;
 
    // Construct a BraidVector for a given double 
-   BraidVector(double value_) : value(value_) { }
+   MyBraidVector(double value_) : value(value_) { }
 
    // Deconstructor
-   virtual ~BraidVector() {};
+   virtual ~MyBraidVector() {};
 
 };
+
+typedef MyBraidVector *BraidVector;
 
 
 // Wrapper for BRAID's App object 
 // --> Put all time INDEPENDENT information here
-class MyBraidApp : public BraidApp
+class MyBraidApp : public BraidApp<MyBraidVector>
 {
 protected:
    // BraidApp defines tstart, tstop, ntime and comm_t
@@ -103,54 +105,54 @@ public:
 
    // Define all the Braid Wrapper routines
    // Note: braid_Vector == BraidVector*
-   virtual int Step(braid_Vector    u_,
-                    braid_Vector    ustop_,
-                    braid_Vector    fstop_,
+   virtual int Step(BraidVector    u_,
+                    BraidVector    ustop_,
+                    BraidVector    fstop_,
                     BraidStepStatus &pstatus);
 
-   virtual int Clone(braid_Vector  u_,
-                     braid_Vector *v_ptr);
+   virtual int Clone(BraidVector  u_,
+                     BraidVector *v_ptr);
 
    virtual int Init(double        t,
-                    braid_Vector *u_ptr);
+                    BraidVector *u_ptr);
 
-   virtual int Free(braid_Vector u_);
+   virtual int Free(BraidVector u_);
 
    virtual int Sum(double       alpha,
-                   braid_Vector x_,
+                   BraidVector x_,
                    double       beta,
-                   braid_Vector y_);
+                   BraidVector y_);
 
-   virtual int SpatialNorm(braid_Vector  u_,
+   virtual int SpatialNorm(BraidVector  u_,
                            double       *norm_ptr);
 
    virtual int BufSize(int *size_ptr,
                        BraidBufferStatus  &status);
 
-   virtual int BufPack(braid_Vector  u_,
+   virtual int BufPack(BraidVector  u_,
                        void         *buffer,
                        BraidBufferStatus  &status);
 
    virtual int BufUnpack(void         *buffer,
-                         braid_Vector *u_ptr,
+                         BraidVector *u_ptr,
                          BraidBufferStatus  &status);
 
-   virtual int Access(braid_Vector       u_,
+   virtual int Access(BraidVector       u_,
                       BraidAccessStatus &astatus);
 
    // Not needed in this example
-   virtual int Residual(braid_Vector     u_,
-                        braid_Vector     r_,
+   virtual int Residual(BraidVector     u_,
+                        BraidVector     r_,
                         BraidStepStatus &pstatus) { return 0; }
 
    // Not needed in this example
-   virtual int Coarsen(braid_Vector   fu_,
-                       braid_Vector  *cu_ptr,
+   virtual int Coarsen(BraidVector   fu_,
+                       BraidVector  *cu_ptr,
                        BraidCoarsenRefStatus &status) { return 0; }
 
    // Not needed in this example
-   virtual int Refine(braid_Vector   cu_,
-                      braid_Vector  *fu_ptr,
+   virtual int Refine(BraidVector   cu_,
+                      BraidVector  *fu_ptr,
                       BraidCoarsenRefStatus &status)  { return 0; }
 
 };
@@ -163,13 +165,11 @@ MyBraidApp::MyBraidApp(MPI_Comm comm_t_, int rank_, double tstart_, double tstop
 }
 
 // 
-int MyBraidApp::Step(braid_Vector    u_,
-                     braid_Vector    ustop_,
-                     braid_Vector    fstop_,
+int MyBraidApp::Step(BraidVector    u,
+                     BraidVector    ustop,
+                     BraidVector    fstop,
                      BraidStepStatus &pstatus)
 {
-   
-   BraidVector *u = (BraidVector*) u_;
    double tstart;             // current time
    double tstop;              // evolve to this time
 
@@ -187,9 +187,9 @@ int MyBraidApp::Step(braid_Vector    u_,
 }
 
 int MyBraidApp::Init(double        t,
-                       braid_Vector *u_ptr)
+                     BraidVector *u_ptr)
 {
-   BraidVector *u = new BraidVector(0.0);
+   BraidVector u = new MyBraidVector(0.0);
    if (t != tstart)
    {
       u->value = 0.456;
@@ -199,62 +199,56 @@ int MyBraidApp::Init(double        t,
       u->value = 1.0;
    }
 
-   *u_ptr = (braid_Vector) u;
+   *u_ptr = u;
    return 0;
 
 }
 
-int MyBraidApp::Clone(braid_Vector  u_,
-                        braid_Vector *v_ptr)
+int MyBraidApp::Clone(BraidVector  u,
+                      BraidVector *v_ptr)
 {
-   BraidVector *u = (BraidVector*) u_;
-   BraidVector *v = new BraidVector(u->value); 
-   *v_ptr = (braid_Vector) v;
+   BraidVector v = new MyBraidVector(u->value); 
+   *v_ptr = v;
 
    return 0;
 }
 
 
-int MyBraidApp::Free(braid_Vector u_)
+int MyBraidApp::Free(BraidVector u)
 {
-   BraidVector *u = (BraidVector*) u_;
    delete u;
    return 0;
 }
 
 int MyBraidApp::Sum(double       alpha,
-                      braid_Vector x_,
-                      double       beta,
-                      braid_Vector y_)
+                    BraidVector x,
+                    double       beta,
+                    BraidVector y)
 {
-   BraidVector *x = (BraidVector*) x_;
-   BraidVector *y = (BraidVector*) y_;
    (y->value) = alpha*(x->value) + beta*(y->value);
    return 0;
 }
 
-int MyBraidApp::SpatialNorm(braid_Vector  u_,
-                              double       *norm_ptr)
+int MyBraidApp::SpatialNorm(BraidVector  u,
+                            double       *norm_ptr)
 {
    double dot;
-   BraidVector *u = (BraidVector*) u_;
    dot = (u->value)*(u->value);
    *norm_ptr = sqrt(dot);
    return 0;
 }
 
 int MyBraidApp::BufSize(int                *size_ptr,
-                          BraidBufferStatus  &status)                           
+                        BraidBufferStatus  &status)                           
 {
    *size_ptr = sizeof(double);
    return 0;
 }
 
-int MyBraidApp::BufPack(braid_Vector       u_,
-                          void               *buffer,
-                          BraidBufferStatus  &status)
+int MyBraidApp::BufPack(BraidVector       u,
+                        void               *buffer,
+                        BraidBufferStatus  &status)
 {
-   BraidVector *u = (BraidVector*) u_;
    double *dbuffer = (double *) buffer;
 
    dbuffer[0] = (u->value);
@@ -264,23 +258,22 @@ int MyBraidApp::BufPack(braid_Vector       u_,
 }
 
 int MyBraidApp::BufUnpack(void              *buffer,
-                            braid_Vector      *u_ptr,
-                            BraidBufferStatus &status)
+                          BraidVector      *u_ptr,
+                          BraidBufferStatus &status)
 {
    double *dbuffer = (double *) buffer;
    
-   BraidVector *u = new BraidVector(dbuffer[0]); 
-   *u_ptr = (braid_Vector) u;
+   BraidVector u = new MyBraidVector(dbuffer[0]); 
+   *u_ptr = u;
 
    return 0;
 }
 
-int MyBraidApp::Access(braid_Vector       u_,
-                         BraidAccessStatus &astatus)
+int MyBraidApp::Access(BraidVector       u,
+                       BraidAccessStatus &astatus)
 {
    char       filename[255];
    FILE      *file;
-   BraidVector *u = (BraidVector*) u_;
 
    // Extract information from astatus
    int done, level, iter, index;
@@ -322,7 +315,7 @@ int main (int argc, char *argv[])
    MyBraidApp app(MPI_COMM_WORLD, rank, tstart, tstop, ntime);
 
    // Initialize Braid Core Object and set some solver options
-   BraidCore core(MPI_COMM_WORLD, &app);
+   BraidCore<MyBraidVector> core(MPI_COMM_WORLD, &app);
    core.SetPrintLevel(2);
    core.SetMaxLevels(2);
    core.SetAbsTol(1.0e-6);
