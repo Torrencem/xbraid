@@ -47,9 +47,9 @@ MFEM_LIB_FILE = mfem_is_not_built
 BRAID_FLAGS = -I$(BRAID_DIR)
 BRAID_LIB_FILE = $(BRAID_DIR)/libbraid.a
 
-RIPS = trimgrit-burgers trischur-adv-diff trischur-ex-04
+RIPS = trimgrit-burgers trischur-adv-diff trischur-ex-04 trischur-ex-04-pp
 C_NOHYPRE = ex-01 ex-01-adjoint ex-01-optimization ex-01-refinement ex-01-expanded ex-01-expanded-bdf2 ex-02 ex-04 ex-04-serial $(RIPS)
-CPP_NOHYPRE = ex-01-pp 
+CPP_NOHYPRE = ex-01-pp
 F_NOHYPRE = ex-01-expanded-f
 C_EXAMPLES = ex-03 ex-03-serial
 # Note: .cpp examples will be linked with mfem
@@ -150,6 +150,9 @@ trischur-adv-diff: trischur-adv-diff.c $(BRAID_LIB_FILE)
 trimgrit-burgers: trimgrit-burgers.c $(BRAID_LIB_FILE)
 	@echo "Building" $@ "..."
 	$(MPICC) $(CFLAGS) $(BRAID_FLAGS) $(@).c -o $@ $(BRAID_LIB_FILE) $(LFLAGS)
+trischur-ex-04-pp: trischur-ex-04-pp.cpp $(BRAID_LIB_FILE)
+	@echo "Building" $@ "..."
+	$(MPICXX) $(CXXFLAGS) $(BRAID_FLAGS) $(@).cpp -o $@ $(BRAID_LIB_FILE) $(LFLAGS)
 
 # Rule for compiling .cpp files; links with mfem
 %: %.cpp $(BRAID_LIB_FILE) $(MFEM_LIB_FILE) $(MFEM_CONFIG_MK)

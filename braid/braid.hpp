@@ -197,6 +197,7 @@ class BraidAccessStatus
       {
          braid_AccessStatusGetCallingFunction(astatus, callingfcn_ptr);
       }
+      void GetILowerUpper(braid_Int *ilower, braid_Int *iupper) { braid_AccessStatusGetILowerUpper(astatus, ilower, iupper); }
 
       // The braid_AccessStatus structure is deallocated inside of Braid
       // This class is just to make code consistently look object oriented
