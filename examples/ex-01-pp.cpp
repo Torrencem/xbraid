@@ -315,7 +315,7 @@ int main (int argc, char *argv[])
    MyBraidApp app(MPI_COMM_WORLD, rank, tstart, tstop, ntime);
 
    // Initialize Braid Core Object and set some solver options
-   BraidCore<MyBraidVector> core(MPI_COMM_WORLD, &app);
+   BraidCore core(MPI_COMM_WORLD, &app);
    core.SetPrintLevel(2);
    core.SetMaxLevels(2);
    core.SetAbsTol(1.0e-6);

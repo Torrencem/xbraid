@@ -500,20 +500,35 @@ static braid_Int _BraidAppRefine(braid_App               _app,
 
 
 // Wrapper for BRAID's core object
-template<typename BraidVector>
 class BraidCore
 {
 private:
    braid_Core core;
 
 public:
-   BraidCore(MPI_Comm comm_world, BraidApp<BraidVector> *app)
+   template<typename BraidVector>
+   BraidCore(MPI_Comm comm_world, BraidApp<BraidVector> *app,
+           bool spatial_coarsen_and_refine = false,
+           bool sync = false,
+           bool residual = false)
    {
       braid_Init(comm_world,
                  app->comm_t, app->tstart, app->tstop, app->ntime, (braid_App)app,
                  _BraidAppStep<BraidVector>, _BraidAppInit<BraidVector>, _BraidAppClone<BraidVector>, _BraidAppFree<BraidVector>,
                  _BraidAppSum<BraidVector>, _BraidAppSpatialNorm<BraidVector>, _BraidAppAccess<BraidVector>,
                  _BraidAppBufSize<BraidVector>, _BraidAppBufPack<BraidVector>, _BraidAppBufUnpack<BraidVector>, &core);
+      if (spatial_coarsen_and_refine) {
+          braid_SetSpatialCoarsen(core, _BraidAppCoarsen<BraidVector>);
+          braid_SetSpatialRefine(core, _BraidAppRefine<BraidVector>);
+      }
+
+      if (sync) {
+          braid_SetSync(core, _BraidAppSync<BraidVector>);
+      }
+
+      if (residual) {
+          braid_SetResidual(core, _BraidAppResidual<BraidVector>);
+      }
    }
 
    void SetMaxLevels(braid_Int max_levels) { braid_SetMaxLevels(core, max_levels); }
@@ -555,16 +570,6 @@ public:
     //}
    }
 
-   void SetSpatialCoarsenAndRefine()
-   {
-      braid_SetSpatialCoarsen(core, _BraidAppCoarsen<BraidVector>);
-      braid_SetSpatialRefine(core, _BraidAppRefine<BraidVector>);
-   }
-
-   void SetSync() { braid_SetSync(core, _BraidAppSync<BraidVector>); }
-
-   void SetResidual() { braid_SetResidual(core, _BraidAppResidual<BraidVector>); }
-
    void SetMaxIter(braid_Int max_iter) { braid_SetMaxIter(core, max_iter); }
 
    void SetPrintLevel(braid_Int print_level) { braid_SetPrintLevel(core, print_level); }
@@ -602,7 +607,6 @@ public:
 // Wrapper for BRAID utilities that help the user,
 // includes all the braid_Test* routines for testing the
 // user-written wrappers.
-template<typename BraidVector>
 class BraidUtil
 {
 private:
@@ -628,6 +632,7 @@ public:
    { braid_GetSpatialAccuracy(sstatus, loose_tol, tight_tol, tol_ptr); }
 
    // Test Function for Init and Access function
+   template<typename BraidVector>
    void TestInitAccess(BraidApp<BraidVector>   *app,
                        MPI_Comm    comm_x,
                        FILE       *fp,
@@ -636,6 +641,7 @@ public:
          _BraidAppInit<BraidVector>, _BraidAppAccess, _BraidAppFree); }
 
    // Test Function for Clone
+   template<typename BraidVector>
    void TestClone(BraidApp<BraidVector>   *app,
                   MPI_Comm    comm_x,
                   FILE       *fp,
@@ -645,6 +651,7 @@ public:
          _BraidAppClone); }
 
    // Test Function for Sum
+   template<typename BraidVector>
    void TestSum(BraidApp<BraidVector>   *app,
                 MPI_Comm    comm_x,
                 FILE       *fp,
@@ -654,6 +661,7 @@ public:
          _BraidAppClone, _BraidAppSum); }
 
    // Test Function for SpatialNorm
+   template<typename BraidVector>
    braid_Int TestSpatialNorm(BraidApp<BraidVector>   *app,
                              MPI_Comm    comm_x,
                              FILE       *fp,
@@ -663,6 +671,7 @@ public:
          _BraidAppSum, _BraidAppSpatialNorm); }
 
    // Test Functions BufSize, BufPack, BufUnpack
+   template<typename BraidVector>
    braid_Int TestBuf(BraidApp<BraidVector>   *app,
                      MPI_Comm    comm_x,
                      FILE       *fp,
@@ -673,6 +682,7 @@ public:
          _BraidAppBufUnpack); }
 
    // Test Functions Coarsen and Refine
+   template<typename BraidVector>
    braid_Int TestCoarsenRefine(BraidApp<BraidVector>   *app,
                                MPI_Comm    comm_x,
                                FILE       *fp,
@@ -685,6 +695,7 @@ public:
          _BraidAppCoarsen, _BraidAppRefine); }
    
    // Test Functions Coarsen and Refine
+   template<typename BraidVector>
    braid_Int TestResidual(BraidApp<BraidVector>   *app,
                           MPI_Comm    comm_x,
                           FILE       *fp,
@@ -695,6 +706,7 @@ public:
          _BraidAppClone, _BraidAppSum, _BraidAppSpatialNorm,
          _BraidAppResidual, _BraidAppStep); }
 
+   template<typename BraidVector>
    braid_Int TestAll(BraidApp<BraidVector>   *app,
                      MPI_Comm    comm_x,
                      FILE       *fp,
