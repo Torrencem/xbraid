@@ -333,6 +333,14 @@ static braid_Int _TriBraidAppBufUnpack(braid_App     _app,
   return app->BufUnpack(buffer, u_ptr, bstatus);
 }
 
+static braid_Int _TriBraidAppSync(braid_App   _app,
+                                  braid_SyncStatus _sstatus)
+{
+  TriBraidApp *app = (TriBraidApp *)_app;
+  BraidSyncStatus sstatus(_sstatus);
+  return app->Sync(sstatus);
+}
+
 // Wrapper for BRAID's core object
 class BraidTriCore {
 private:
@@ -393,7 +401,7 @@ public:
       braid_SetSpatialRefine(core, _BraidAppRefine);
    }
 
-   void SetSync() { braid_SetSync(core, _BraidAppSync); }
+   void SetSync() { braid_SetSync(core, _TriBraidAppSync); }
 
    void SetResidual() { braid_SetResidual(core, _BraidAppResidual); }
 
